@@ -54,7 +54,7 @@ pub use val::{ByteQue, Store};
 #[macro_use]
 mod fun;
 pub use fun::{Fun, Result};
-pub use macros::{fmt_function, CommonStore};
+pub use lrpc_macros::{fmt_function, CommonStore};
 mod buf;
 pub use buf::{send_data, RecvBuf};
 mod tcp;
