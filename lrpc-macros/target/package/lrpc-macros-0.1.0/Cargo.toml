@@ -15,6 +15,8 @@ edition = "2018"
 name = "lrpc-macros"
 version = "0.1.0"
 authors = ["lipogem"]
+description = "lrpc's proc macros"
+license = "MIT"
 
 [lib]
 proc-macro = true
