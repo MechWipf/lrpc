@@ -5,6 +5,9 @@ authors = ["lipogem"]
 edition = "2018"
 license = "MIT"
 description = "local rpc"
+repository = "https://github.com/lipogem/lrpc"
+readme = "README.md"
+keywords = ["rpc", "lrpc"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -49,3 +49,7 @@ Use synchronous tcp to transfer data
      }
  }
  ```
+
+ ## License
+
+lrpc is provided under the MIT license. See [LICENSE](LICENSE).
