@@ -1,6 +1,6 @@
 [package]
 name = "lrpc"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["lipogem"]
 edition = "2018"
 license = "MIT"
