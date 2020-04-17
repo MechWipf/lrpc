@@ -1,5 +1,5 @@
 # lrpc
-Rpc using synchronous tcp protocol to transmit data
+Use synchronous tcp to transfer data
 
 *Examples*
 
