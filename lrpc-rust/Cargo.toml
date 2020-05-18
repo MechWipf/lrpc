@@ -1,15 +1,15 @@
 [package]
 name = "lrpc"
-version = "0.1.1"
+version = "1.0.0"
 authors = ["lipogem"]
 edition = "2018"
 license = "MIT"
 description = "local rpc"
 repository = "https://github.com/lipogem/lrpc"
 readme = "README.md"
-keywords = ["rpc", "lrpc"]
+keywords = ["rpc", "lrpc", "remoting"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lrpc-macros = { path = "./lrpc-macros", version = "0.1.0" }
+lrpc-macros = { path = "./lrpc-macros", version = "1.0.0" }
