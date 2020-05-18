@@ -1,6 +1,6 @@
 package buf
 
-import "lrpc-go/val"
+import "github.com/lipogem/lrpc/lrpc-go/val"
 
 //RecvBuf actual length data
 type RecvBuf struct {

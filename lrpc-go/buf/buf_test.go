@@ -1,8 +1,9 @@
 package buf
 
 import (
-	"lrpc-go/val"
 	"testing"
+
+	"github.com/lipogem/lrpc/lrpc-go/val"
 )
 
 func TestBuf(t *testing.T) {

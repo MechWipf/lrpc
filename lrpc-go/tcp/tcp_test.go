@@ -1,11 +1,12 @@
 package tcp
 
 import (
-	"lrpc-go/fun"
-	"lrpc-go/val"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/lipogem/lrpc/lrpc-go/fun"
+	"github.com/lipogem/lrpc/lrpc-go/val"
 )
 
 func plus(x int64, y float64) int64 {

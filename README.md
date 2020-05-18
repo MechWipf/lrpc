@@ -59,12 +59,13 @@ fn main() {
 package main
 
 import (
-	"fmt"
-	"lrpc-go/fun"
-	"lrpc-go/tcp"
-	"lrpc-go/val"
+	"fmt"	
 	"reflect"
 	"time"
+
+	"github.com/lipogem/lrpc/lrpc-go/fun"
+	"github.com/lipogem/lrpc/lrpc-go/tcp"
+	"github.com/lipogem/lrpc/lrpc-go/val"
 )
 
 type Point struct {

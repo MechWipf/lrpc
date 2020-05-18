@@ -2,10 +2,11 @@ package tcp
 
 import (
 	"errors"
-	"lrpc-go/buf"
-	"lrpc-go/fun"
-	"lrpc-go/val"
 	"net"
+
+	"github.com/lipogem/lrpc/lrpc-go/buf"
+	"github.com/lipogem/lrpc/lrpc-go/fun"
+	"github.com/lipogem/lrpc/lrpc-go/val"
 )
 
 //Service use tcp in the standard library to receive data,

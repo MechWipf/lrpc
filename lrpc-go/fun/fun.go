@@ -2,10 +2,11 @@ package fun
 
 import (
 	"errors"
-	"lrpc-go/val"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/lipogem/lrpc/lrpc-go/val"
 )
 
 //Fun register call function
