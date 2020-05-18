@@ -6,7 +6,6 @@ edition = "2018"
 license = "MIT"
 description = "lrpc's proc macros"
 repository = "https://github.com/lipogem/lrpc"
-readme = "https://github.com/lipogem/lrpc/blob/master/README.md"
 keywords = ["rpc", "lrpc", "proc_macro"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
