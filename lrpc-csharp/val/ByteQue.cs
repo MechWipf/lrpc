@@ -298,6 +298,23 @@ namespace lrpc.val
             {
                 STORES[type].Store(this, val);
             }
+            else if (type.IsArray && type.GetArrayRank() == 1)
+            {
+                if (val == null)
+                {
+                    PushSize(0);
+                }
+                else
+                {
+                    Array arr = (Array)val;
+                    PushSize(arr.Length);
+                    Type elt = type.GetElementType();
+                    for (int i = 0; i < arr.Length; ++i)
+                    {
+                        Push(elt, arr.GetValue(i));
+                    }
+                }
+            }
             else
             {
                 FieldInfo[] flds = type.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
@@ -375,6 +392,16 @@ namespace lrpc.val
             if (STORES.ContainsKey(type))
             {
                 return STORES[type].Restore(this);
+            }
+            else if (type.IsArray && type.GetArrayRank() == 1)
+            {
+                Type elt = type.GetElementType();
+                Array arr = Array.CreateInstance(elt, PopSize());
+                for (int i = 0; i < arr.Length; ++i)
+                {
+                    arr.SetValue(Pop(elt), i);
+                }
+                return arr;
             }
             ConstructorInfo cons = type.GetConstructor(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly, null, Type.EmptyTypes, null);
             object obj = cons.Invoke(null);

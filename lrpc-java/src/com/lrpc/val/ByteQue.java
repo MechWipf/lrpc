@@ -1,5 +1,6 @@
 package com.lrpc.val;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -214,6 +215,17 @@ public class ByteQue {
             push((byte) (v >> 8));
         } else if (STORES.containsKey(type)) {
             STORES.get(type).store(this, val);
+        } else if (type.isArray()) {
+            if (val == null) {
+                pushSize(0);
+            } else {
+                int len = Array.getLength(val);
+                pushSize(len);
+                Class<?> cot = type.getComponentType();
+                for (int i = 0; i < len; ++i) {
+                    push(cot, Array.get(val, i));
+                }
+            }
         } else if (type.isAnnotationPresent(StoreFields.class)) {
             StoreFields anno = type.getAnnotation(StoreFields.class);
             String[] fns = anno.value().split(",");
@@ -291,6 +303,15 @@ public class ByteQue {
         }
         if (STORES.containsKey(type)) {
             return STORES.get(type).restore(this);
+        }
+        if (type.isArray()) {
+            int len = popSize();
+            Class<?> cot = type.getComponentType();
+            Object obj = Array.newInstance(cot, len);
+            for (int i = 0; i < len; ++i) {
+                Array.set(obj, i, pop(cot));
+            }
+            return obj;
         }
         Constructor<?> cons;
         try {
