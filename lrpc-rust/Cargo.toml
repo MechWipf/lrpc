@@ -1,13 +1,13 @@
 [package]
 name = "lrpc"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["lipogem"]
 edition = "2018"
 license = "MIT"
 description = "local rpc"
 repository = "https://github.com/lipogem/lrpc"
 readme = "README.md"
-keywords = ["rpc", "lrpc", "remoting"]
+keywords = ["rpc", "lrpc", "serialize", "deserialize", "remoting"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

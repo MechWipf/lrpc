@@ -31,41 +31,100 @@
 //! }
 //! ```
 
-use std::{collections::VecDeque, mem::transmute};
-
 #[derive(Debug)]
-pub struct ByteQue(VecDeque<u8>);
+pub struct ByteQue {
+    buf: Vec<u8>,
+    head: usize,
+}
 
 impl ByteQue {
     #[inline]
     pub fn new() -> Self {
-        ByteQue(VecDeque::new())
+        ByteQue {
+            buf: Vec::new(),
+            head: 0,
+        }
+    }
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        ByteQue {
+            buf: Vec::with_capacity(capacity),
+            head: 0,
+        }
+    }
+    #[inline]
+    pub fn reserve(&mut self, len: usize) {
+        let count = self.len();
+        if count <= self.head {
+            let (left, right) = self.buf.split_at_mut(self.head);
+            left[..count].copy_from_slice(right);
+            self.head = 0;
+            self.buf.truncate(count);
+        }
+        self.buf.reserve(len);
     }
     #[inline]
     pub fn push(&mut self, value: u8) {
-        self.0.push_back(value);
+        self.reserve(1);
+        self.buf.push(value);
     }
     #[inline]
     pub fn pop(&mut self) -> u8 {
-        self.0.pop_front().unwrap_or(0)
+        if self.len() == 0 {
+            0
+        } else {
+            let x = self.head;
+            self.head += 1;
+            self.buf[x]
+        }
+    }
+    #[inline]
+    pub fn push_slice(&mut self, value: &[u8]) {
+        self.reserve(value.len());
+        self.buf.extend_from_slice(value);
+    }
+    #[inline]
+    pub fn pop_slice(&mut self, len: usize) -> &[u8] {
+        let count = self.len();
+        if count < len {
+            if count == 0 {
+                self.head = 0;
+                self.buf.clear();
+            }
+            self.reserve(len - count);
+            self.buf.resize(self.head + len, 0);
+        }
+        let x = self.head;
+        self.head += len;
+        &self.buf[x..self.head]
     }
     #[inline]
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.buf.len() - self.head
     }
 }
 
 impl From<Vec<u8>> for ByteQue {
     #[inline]
     fn from(other: Vec<u8>) -> Self {
-        ByteQue(VecDeque::from(other))
+        ByteQue {
+            buf: other,
+            head: 0,
+        }
     }
 }
 
 impl From<ByteQue> for Vec<u8> {
     #[inline]
-    fn from(other: ByteQue) -> Self {
-        Vec::<u8>::from(other.0)
+    fn from(mut other: ByteQue) -> Self {
+        if other.head != 0 {
+            let count = other.len();
+            if count != 0 {
+                other.buf.copy_within(other.head.., 0);
+            }
+            other.buf.truncate(count);
+        }
+        other.buf
     }
 }
 
@@ -104,131 +163,6 @@ impl Store for usize {
     }
 }
 
-impl Store for i8 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as i8
-    }
-}
-
-impl Store for i16 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as i16 | (q.pop() as i16) << 8
-    }
-}
-
-impl Store for i32 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as i32 | (q.pop() as i32) << 8 | (q.pop() as i32) << 16 | (q.pop() as i32) << 24
-    }
-}
-
-impl Store for i64 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-        q.push((*self >> 32) as u8);
-        q.push((*self >> 40) as u8);
-        q.push((*self >> 48) as u8);
-        q.push((*self >> 56) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as i64
-            | (q.pop() as i64) << 8
-            | (q.pop() as i64) << 16
-            | (q.pop() as i64) << 24
-            | (q.pop() as i64) << 32
-            | (q.pop() as i64) << 40
-            | (q.pop() as i64) << 48
-            | (q.pop() as i64) << 56
-    }
-}
-
-impl Store for i128 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-        q.push((*self >> 32) as u8);
-        q.push((*self >> 40) as u8);
-        q.push((*self >> 48) as u8);
-        q.push((*self >> 56) as u8);
-        q.push((*self >> 64) as u8);
-        q.push((*self >> 72) as u8);
-        q.push((*self >> 80) as u8);
-        q.push((*self >> 88) as u8);
-        q.push((*self >> 96) as u8);
-        q.push((*self >> 104) as u8);
-        q.push((*self >> 112) as u8);
-        q.push((*self >> 120) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as i128
-            | (q.pop() as i128) << 8
-            | (q.pop() as i128) << 16
-            | (q.pop() as i128) << 24
-            | (q.pop() as i128) << 32
-            | (q.pop() as i128) << 40
-            | (q.pop() as i128) << 48
-            | (q.pop() as i128) << 56
-            | (q.pop() as i128) << 64
-            | (q.pop() as i128) << 72
-            | (q.pop() as i128) << 80
-            | (q.pop() as i128) << 88
-            | (q.pop() as i128) << 96
-            | (q.pop() as i128) << 104
-            | (q.pop() as i128) << 112
-            | (q.pop() as i128) << 120
-    }
-}
-
-impl Store for f32 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        unsafe { transmute::<f32, i32>(*self).store(q) };
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        unsafe { transmute::<i32, f32>(i32::restore(q)) }
-    }
-}
-
-impl Store for f64 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        unsafe { transmute::<f64, i64>(*self).store(q) }
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        unsafe { transmute::<i64, f64>(i64::restore(q)) }
-    }
-}
-
 impl Store for bool {
     #[inline]
     fn store(&self, q: &mut ByteQue) {
@@ -237,6 +171,17 @@ impl Store for bool {
     #[inline]
     fn restore(q: &mut ByteQue) -> Self {
         q.pop() != 0
+    }
+}
+
+impl Store for i8 {
+    #[inline]
+    fn store(&self, q: &mut ByteQue) {
+        q.push(*self as u8);
+    }
+    #[inline]
+    fn restore(q: &mut ByteQue) -> Self {
+        q.pop() as i8
     }
 }
 
@@ -251,117 +196,55 @@ impl Store for u8 {
     }
 }
 
-impl Store for u16 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as u16 | (q.pop() as u16) << 8
-    }
+macro_rules! number_store {
+    ($typ:ty, $num:expr) => {
+        impl Store for $typ {
+            #[inline]
+            fn store(&self, q: &mut ByteQue) {
+                let mut s: [u8; $num] = unsafe { std::mem::transmute(*self) };
+                if cfg!(target_endian = "big") {
+                    s.reverse();
+                }
+                q.push_slice(&s);
+            }
+            #[inline]
+            fn restore(q: &mut ByteQue) -> Self {
+                let mut s = [0u8; $num];
+                s.copy_from_slice(q.pop_slice($num));
+                if cfg!(target_endian = "big") {
+                    s.reverse();
+                }
+                unsafe { std::mem::transmute(s) }
+            }
+        }
+    };
 }
 
-impl Store for u32 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as u32 | (q.pop() as u32) << 8 | (q.pop() as u32) << 16 | (q.pop() as u32) << 24
-    }
-}
-
-impl Store for u64 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-        q.push((*self >> 32) as u8);
-        q.push((*self >> 40) as u8);
-        q.push((*self >> 48) as u8);
-        q.push((*self >> 56) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as u64
-            | (q.pop() as u64) << 8
-            | (q.pop() as u64) << 16
-            | (q.pop() as u64) << 24
-            | (q.pop() as u64) << 32
-            | (q.pop() as u64) << 40
-            | (q.pop() as u64) << 48
-            | (q.pop() as u64) << 56
-    }
-}
-
-impl Store for u128 {
-    #[inline]
-    fn store(&self, q: &mut ByteQue) {
-        q.push(*self as u8);
-        q.push((*self >> 8) as u8);
-        q.push((*self >> 16) as u8);
-        q.push((*self >> 24) as u8);
-        q.push((*self >> 32) as u8);
-        q.push((*self >> 40) as u8);
-        q.push((*self >> 48) as u8);
-        q.push((*self >> 56) as u8);
-        q.push((*self >> 64) as u8);
-        q.push((*self >> 72) as u8);
-        q.push((*self >> 80) as u8);
-        q.push((*self >> 88) as u8);
-        q.push((*self >> 96) as u8);
-        q.push((*self >> 104) as u8);
-        q.push((*self >> 112) as u8);
-        q.push((*self >> 120) as u8);
-    }
-    #[inline]
-    fn restore(q: &mut ByteQue) -> Self {
-        q.pop() as u128
-            | (q.pop() as u128) << 8
-            | (q.pop() as u128) << 16
-            | (q.pop() as u128) << 24
-            | (q.pop() as u128) << 32
-            | (q.pop() as u128) << 40
-            | (q.pop() as u128) << 48
-            | (q.pop() as u128) << 56
-            | (q.pop() as u128) << 64
-            | (q.pop() as u128) << 72
-            | (q.pop() as u128) << 80
-            | (q.pop() as u128) << 88
-            | (q.pop() as u128) << 96
-            | (q.pop() as u128) << 104
-            | (q.pop() as u128) << 112
-            | (q.pop() as u128) << 120
-    }
-}
+number_store!(i16, 2);
+number_store!(u16, 2);
+number_store!(i32, 4);
+number_store!(u32, 4);
+number_store!(i64, 8);
+number_store!(u64, 8);
+number_store!(i128, 16);
+number_store!(u128, 16);
+number_store!(f32, 4);
+number_store!(f64, 8);
+number_store!(char, 4);
 
 impl Store for String {
     #[inline]
     fn store(&self, q: &mut ByteQue) {
         let v = self.as_bytes();
-        let l = v.len();
-        l.store(q);
-        for i in 0..l {
-            q.push(v[i]);
-        }
+        v.len().store(q);
+        q.push_slice(v);
     }
     #[inline]
     fn restore(q: &mut ByteQue) -> Self {
-        let l = usize::restore(q);
-        if l <= q.len() {
-            let mut v = Vec::with_capacity(l);
-            for _ in 0..l {
-                v.push(q.pop());
-            }
-            if let Ok(v) = String::from_utf8(v) {
+        let s = usize::restore(q);
+        if s <= q.len() {
+            let v = q.pop_slice(s);
+            if let Ok(v) = String::from_utf8(v.to_vec()) {
                 return v;
             }
         }
@@ -396,9 +279,23 @@ where
     #[inline]
     fn restore(q: &mut ByteQue) -> Self {
         if bool::restore(q) {
-            return Some(Store::restore(q));
+            return Some(T::restore(q));
         }
         None
+    }
+}
+
+impl<T> Store for Box<T>
+where
+    T: Store,
+{
+    #[inline]
+    fn store(&self, q: &mut ByteQue) {
+        (**self).store(q);
+    }
+    #[inline]
+    fn restore(q: &mut ByteQue) -> Self {
+        Box::new(T::restore(q))
     }
 }
 
@@ -408,19 +305,26 @@ where
 {
     #[inline]
     fn store(&self, q: &mut ByteQue) {
-        let l = self.len();
-        l.store(q);
-        for i in 0..l {
-            self[i].store(q);
+        let mut s = self.len();
+        s.store(q);
+        if s > 0 {
+            let x = q.len();
+            for v in self {
+                v.store(q);
+                if s > 1 {
+                    q.reserve((q.len() - x) * (s - 1));
+                    s = 0;
+                }
+            }
         }
     }
     #[inline]
     fn restore(q: &mut ByteQue) -> Self {
-        let l = usize::restore(q);
-        if l <= q.len() {
-            let mut v = Vec::with_capacity(l);
-            for _ in 0..l {
-                v.push(Store::restore(q));
+        let s = usize::restore(q);
+        if s <= q.len() {
+            let mut v = Vec::with_capacity(s);
+            for _ in 0..s {
+                v.push(T::restore(q));
             }
             return v;
         }
@@ -428,3 +332,78 @@ where
         Vec::new()
     }
 }
+
+impl<K, V> Store for std::collections::HashMap<K, V>
+where
+    K: Store + Eq + core::hash::Hash,
+    V: Store,
+{
+    #[inline]
+    fn store(&self, q: &mut ByteQue) {
+        let mut s = self.len();
+        s.store(q);
+        if s > 0 {
+            let x = q.len();
+            for (k, v) in self {
+                k.store(q);
+                v.store(q);
+                if s > 1 {
+                    q.reserve((q.len() - x) * (s - 1));
+                    s = 0;
+                }
+            }
+        }
+    }
+    #[inline]
+    fn restore(q: &mut ByteQue) -> Self {
+        let s = usize::restore(q);
+        if s <= q.len() {
+            let mut m = std::collections::HashMap::with_capacity(s);
+            for _ in 0..s {
+                m.insert(K::restore(q), V::restore(q));
+            }
+            return m;
+        }
+        // the data must be wrong
+        std::collections::HashMap::new()
+    }
+}
+
+macro_rules! tuple_store {
+    ($(($n:tt, $T:ident)),+) => {
+        impl<$($T),+> Store for ($($T,)+)
+        where
+            $($T: Store),+
+        {
+            #[inline]
+            fn store(&self, q: &mut ByteQue) {
+                $(self.$n.store(q);)+
+            }
+            #[inline]
+            fn restore(q: &mut ByteQue) -> Self {
+                ($($T::restore(q),)+)
+            }
+        }
+    };
+}
+
+tuple_store!((0, A));
+tuple_store!((0, A), (1, B));
+tuple_store!((0, A), (1, B), (2, C));
+tuple_store!((0, A), (1, B), (2, C), (3, D));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O), (15, P));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O), (15, P), (16, Q));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O), (15, P), (16, Q), (17, R));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O), (15, P), (16, Q), (17, R), (18, S));
+tuple_store!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J), (10, K), (11, L), (12, M), (13, N), (14, O), (15, P), (16, Q), (17, R), (18, S), (19, T));

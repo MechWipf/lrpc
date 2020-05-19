@@ -67,7 +67,11 @@ fn test_val() {
     v.store(q);
     assert_eq!(v, u128::restore(q));
 
-    let v = "welcome to 中国".to_string();
+    let v = '😄';
+    v.store(q);
+    assert_eq!(v, char::restore(q));
+
+    let v = "welcome to 😄".to_string();
     v.store(q);
     assert_eq!(v, String::restore(q));
 
@@ -83,6 +87,10 @@ fn test_val() {
     v.store(q);
     assert_eq!(v, Option::<String>::restore(q));
 
+    let v = Box::new(996);
+    v.store(q);
+    assert_eq!(v, Box::<i32>::restore(q));
+
     let v = vec![
         "0".to_string(),
         "1".to_string(),
@@ -93,6 +101,19 @@ fn test_val() {
     ];
     v.store(q);
     assert_eq!(v, Vec::<String>::restore(q));
+
+    let mut v = std::collections::HashMap::<String, i32>::new();
+    v.insert("one".to_string(), 1);
+    v.insert("two".to_string(), 2);
+    v.insert("three".to_string(), 3);
+    v.insert("four".to_string(), 4);
+    v.insert("five".to_string(), 5);
+    v.store(q);
+    assert_eq!(v, std::collections::HashMap::<String, i32>::restore(q));
+
+    let v = (1u8, "two".to_string(), 3i16, 4u32, "five".to_string());
+    v.store(q);
+    assert_eq!(v, Store::restore(q));
 }
 
 #[test]
